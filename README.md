@@ -35,11 +35,6 @@ git clone https://github.com/BerkAkipek/cracking-the-coding-interview-solutions-
 cd cracking-the-coding-interview-solutions-go
 ```
 
-### Run a Specific Solution
-```bash
-go run ./01_Arrays_and_Strings/is_unique.go
-```
-
 ### Run All Tests
 ```bash
 go test ./...
