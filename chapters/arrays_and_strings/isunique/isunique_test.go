@@ -3,7 +3,7 @@ package isunique_test
 import (
 	"testing"
 
-	"github.com/BerkAkipek/cracking-the-coding-interview-solutions-go/01-arrays-and-strings/isunique"
+	"github.com/BerkAkipek/cracking-the-coding-interview-solutions-go/chapters/arrays_and_strings/isunique"
 )
 
 func TestIsUnique(t *testing.T) {
