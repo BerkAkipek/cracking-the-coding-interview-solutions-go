@@ -87,6 +87,26 @@ func (l *LinkedList) PrintList() {
 	}
 }
 
+// ReverseList reverse given linked list
+// It had written for satify the follow up question
+func (l *LinkedList) ReverseList() {
+	if l.Head == nil {
+		return
+	}
+
+	var prev *Node
+	var track *Node
+	var current = l.Head
+
+	for current != nil {
+		track = current.Next
+		current.Next = prev
+		prev = current
+		current = track
+	}
+	l.Head = prev
+}
+
 func BuildFromSlice(slc []int) *LinkedList {
 	list := &LinkedList{}
 
