@@ -23,8 +23,8 @@ func combination(n, r int) int {
 
 func WinProbability(n, k int, p float64) float64 {
 	result := 0.0
-	for i := k; k <= n; i++ {
-		result += float64(combination(n, k)) * math.Pow(p, float64(k)) * math.Pow(1-p, float64((n-k)))
+	for i := k; i <= n; i++ {
+		result += float64(combination(n, i)) * math.Pow(p, float64(i)) * math.Pow(1-p, float64((n-i)))
 	}
 	return result
 }
