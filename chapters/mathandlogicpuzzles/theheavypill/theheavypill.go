@@ -1,4 +1,4 @@
-package main
+package theheavypill
 
 import (
 	"fmt"
@@ -60,8 +60,4 @@ func Game() {
 	fmt.Printf("Expected: %.1f g\n", expected)
 	fmt.Printf("Actual:   %.1f g\n", realSum)
 	fmt.Printf("Heavy bottle is #%d\n", heavyIndex+1)
-}
-
-func main() {
-	Game()
 }
