@@ -1,107 +1,58 @@
 package routebetweennodes
 
-import (
-	"crypto/sha256"
-	"time"
-)
-
 /*
 Route Between Nodes: Given a directed graph, design an algorithm to find out whether there is a
-route between two nodes.
+route between two nodes
 */
 
 type Node struct {
-	ID    [32]byte
-	Label string
-	Data  any
-}
-
-func NewNode(label string, data any) *Node {
-	id := sha256.Sum256([]byte(label + time.Now().String()))
-	return &Node{
-		ID:    id,
-		Label: label,
-		Data:  data,
-	}
-}
-
-type Graph struct {
-	Adj  map[[32]byte][][32]byte
-	Root *Node
-}
-
-func NewGraph() *Graph {
-	root := NewNode("root", []int{0})
-	return &Graph{
-		Adj:  map[[32]byte][][32]byte{},
-		Root: root,
-	}
-}
-
-func (g *Graph) Populate(from *Node, label string, data any) *Node {
-	newNode := NewNode(label, data)
-	g.Adj[from.ID] = append(g.Adj[from.ID], newNode.ID)
-	return newNode
-}
-
-func (g *Graph) AddEdge(first, second *Node) bool {
-	if first == nil || second == nil {
-		return false
-	}
-	g.Adj[first.ID] = append(g.Adj[first.ID], second.ID)
-	return true
+	ID         int
+	Neighbours []*Node
 }
 
 type Queue struct {
-	data [][32]byte
+	data []*Node
 }
 
-func (q *Queue) Enqueue(n [32]byte) bool {
-	if n == [32]byte{} {
-		return false
-	}
-
+func (q *Queue) Enqueue(n *Node) {
 	q.data = append(q.data, n)
-	return true
 }
 
-func (q *Queue) Dequeue() ([32]byte, bool) {
+func (q *Queue) Dequeue() *Node {
 	if len(q.data) == 0 {
-		return [32]byte{}, false
+		return nil
 	}
 	element := q.data[0]
 	q.data = q.data[1:]
-	return element, true
+	return element
 }
 
-func (g *Graph) HasRoute(node, target *Node) bool {
-	if node == nil || target == nil {
-		return false
+func NewQueue() *Queue {
+	return &Queue{
+		data: []*Node{},
 	}
+}
 
-	visited := make(map[[32]byte]bool)
-	queue := &Queue{
-		data: [][32]byte{node.ID},
-	}
-	visited[node.ID] = true
+func (q *Queue) IsEmpty() bool { return len(q.data) == 0 }
 
-	for len(queue.data) != 0 {
-		currrent, ok := queue.Dequeue()
-		if !ok {
-			return false
-		}
+func (n *Node) BFS(other *Node) bool {
+	q := NewQueue()
+	seen := make(map[*Node]bool)
 
-		for _, elem := range g.Adj[currrent] {
-			if !visited[elem] {
-				visited[elem] = true
-				queue.Enqueue(elem)
-			}
-		}
+	q.Enqueue(n)
+	seen[n] = true
 
-		if currrent == target.ID {
+	for !q.IsEmpty() {
+		current := q.Dequeue()
+		if current == other {
 			return true
 		}
+		for _, nb := range current.Neighbours {
+			if !seen[nb] {
+				seen[nb] = true
+				q.Enqueue(nb)
+			}
+		}
 	}
-
 	return false
 }

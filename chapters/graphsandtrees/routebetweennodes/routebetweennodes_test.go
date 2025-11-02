@@ -2,136 +2,66 @@ package routebetweennodes
 
 import "testing"
 
-func TestQueue(t *testing.T) {
-	q := &Queue{}
-	id1 := [32]byte{1}
-	id2 := [32]byte{2}
-
-	if !q.Enqueue(id1) {
-		t.Fatalf("Enqueue(%v) returned false unexpectedly", id1)
-	}
-	if !q.Enqueue(id2) {
-		t.Fatalf("Enqueue(%v) returned false unexpectedly", id2)
-	}
-
-	got, ok := q.Dequeue()
-	if !ok || got != id1 {
-		t.Errorf("Dequeue() = %v, %v; want %v, true", got, ok, id1)
-	}
-
-	got, ok = q.Dequeue()
-	if !ok || got != id2 {
-		t.Errorf("Dequeue() = %v, %v; want %v, true", got, ok, id2)
-	}
-
-	_, ok = q.Dequeue()
-	if ok {
-		t.Errorf("Dequeue() from empty queue should return ok=false")
-	}
+// helper function for quick linking
+func link(from *Node, to ...*Node) *Node {
+	from.Neighbours = append(from.Neighbours, to...)
+	return from
 }
 
-func TestAddEdgeAndPopulate(t *testing.T) {
-	g := NewGraph()
-	a := NewNode("A", nil)
-	b := NewNode("B", nil)
+func TestBFS(t *testing.T) {
+	// --- Build a small directed graph ---
+	// A → B → D
+	// ↓
+	// C
+	// E isolated
+	a := &Node{ID: 0}
+	b := &Node{ID: 1}
+	c := &Node{ID: 2}
+	d := &Node{ID: 3}
+	e := &Node{ID: 4}
 
-	if ok := g.AddEdge(a, b); !ok {
-		t.Errorf("AddEdge() returned false unexpectedly")
-	}
-	if len(g.Adj[a.ID]) != 1 || g.Adj[a.ID][0] != b.ID {
-		t.Errorf("Adjacency list incorrect after AddEdge, got %v", g.Adj[a.ID])
-	}
+	link(a, b, c)
+	link(b, d)
+	// c, d, e have no outgoing edges
 
-	// Populate should link from -> new node
-	c := g.Populate(b, "C", nil)
-	if len(g.Adj[b.ID]) == 0 || g.Adj[b.ID][0] != c.ID {
-		t.Errorf("Populate() failed to link b -> c; got %v", g.Adj[b.ID])
-	}
-}
+	tests := []struct {
+		name   string
+		start  *Node
+		target *Node
+		want   bool
+	}{
+		// --- Positive cases ---
+		{"A→D exists via B", a, d, true},
+		{"A→C direct edge", a, c, true},
+		{"B→D direct edge", b, d, true},
+		{"A→A same node", a, a, true},
 
-func TestHasRoute(t *testing.T) {
-	type testCase struct {
-		name     string
-		build    func() (*Graph, *Node, *Node)
-		expected bool
-	}
-
-	tests := []testCase{
-		{
-			name: "Direct connection (A -> B)",
-			build: func() (*Graph, *Node, *Node) {
-				g := NewGraph()
-				a := NewNode("A", nil)
-				b := NewNode("B", nil)
-				g.AddEdge(a, b)
-				return g, a, b
-			},
-			expected: true,
-		},
-		{
-			name: "Indirect connection (A -> B -> C)",
-			build: func() (*Graph, *Node, *Node) {
-				g := NewGraph()
-				a := NewNode("A", nil)
-				b := g.Populate(a, "B", nil)
-				c := g.Populate(b, "C", nil)
-				return g, a, c
-			},
-			expected: true,
-		},
-		{
-			name: "No connection (A -> B, C isolated)",
-			build: func() (*Graph, *Node, *Node) {
-				g := NewGraph()
-				a := NewNode("A", nil)
-				b := NewNode("B", nil)
-				c := NewNode("C", nil)
-				g.AddEdge(a, b)
-				return g, a, c
-			},
-			expected: false,
-		},
-		{
-			name: "Cyclic graph (A -> B -> A)",
-			build: func() (*Graph, *Node, *Node) {
-				g := NewGraph()
-				a := NewNode("A", nil)
-				b := NewNode("B", nil)
-				g.AddEdge(a, b)
-				g.AddEdge(b, a)
-				return g, a, b
-			},
-			expected: true,
-		},
-		{
-			name: "Self-loop (A -> A)",
-			build: func() (*Graph, *Node, *Node) {
-				g := NewGraph()
-				a := NewNode("A", nil)
-				g.AddEdge(a, a)
-				return g, a, a
-			},
-			expected: true,
-		},
-		{
-			name: "Empty graph",
-			build: func() (*Graph, *Node, *Node) {
-				g := NewGraph()
-				a := NewNode("A", nil)
-				b := NewNode("B", nil)
-				return g, a, b
-			},
-			expected: false,
-		},
+		// --- Negative cases ---
+		{"B→A none (reverse edge)", b, a, false},
+		{"C→D none", c, d, false},
+		{"E→A isolated node", e, a, false},
+		{"nil start", nil, a, false},
+		{"nil target", a, nil, false},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			g, from, to := tc.build()
-			got := g.HasRoute(from, to)
-			if got != tc.expected {
-				t.Errorf("HasRoute(%s) = %v; want %v", tc.name, got, tc.expected)
+			got := false
+			if tc.start != nil {
+				got = tc.start.BFS(tc.target)
+			}
+			if got != tc.want {
+				t.Fatalf("BFS(%v→%v) = %v; want %v",
+					nodeID(tc.start), nodeID(tc.target), got, tc.want)
 			}
 		})
 	}
+}
+
+// helper for readable test names
+func nodeID(n *Node) any {
+	if n == nil {
+		return "nil"
+	}
+	return n.ID
 }
