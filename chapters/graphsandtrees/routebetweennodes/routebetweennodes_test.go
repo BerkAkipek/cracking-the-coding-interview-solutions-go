@@ -9,11 +9,6 @@ func link(from *Node, to ...*Node) *Node {
 }
 
 func TestBFS(t *testing.T) {
-	// --- Build a small directed graph ---
-	// A → B → D
-	// ↓
-	// C
-	// E isolated
 	a := &Node{ID: 0}
 	b := &Node{ID: 1}
 	c := &Node{ID: 2}
@@ -22,7 +17,6 @@ func TestBFS(t *testing.T) {
 
 	link(a, b, c)
 	link(b, d)
-	// c, d, e have no outgoing edges
 
 	tests := []struct {
 		name   string

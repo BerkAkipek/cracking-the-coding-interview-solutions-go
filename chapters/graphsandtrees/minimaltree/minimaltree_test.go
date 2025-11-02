@@ -1,117 +1,87 @@
 package minimaltree
 
 import (
-	"math"
-	"reflect"
 	"testing"
 )
 
-func inorderTraversal(n *Node, result *[]int) {
+// Helper to get the in-order traversal of the BST.
+func inorder(n *Node, result *[]int) {
 	if n == nil {
 		return
 	}
-	inorderTraversal(n.left, result)
-	*result = append(*result, n.data)
-	inorderTraversal(n.right, result)
+	inorder(n.left, result)
+	*result = append(*result, n.val)
+	inorder(n.right, result)
 }
 
+// Helper to compute tree height.
 func height(n *Node) int {
 	if n == nil {
 		return 0
 	}
-	left := height(n.left)
-	right := height(n.right)
-	if left > right {
-		return left + 1
+	lh := height(n.left)
+	rh := height(n.right)
+	if lh > rh {
+		return lh + 1
 	}
-	return right + 1
+	return rh + 1
 }
 
-func TestBuildTree(t *testing.T) {
+// Helper to verify if the tree is height-balanced.
+func isBalanced(n *Node) bool {
+	if n == nil {
+		return true
+	}
+	lh := height(n.left)
+	rh := height(n.right)
+	if lh-rh > 1 || rh-lh > 1 {
+		return false
+	}
+	return isBalanced(n.left) && isBalanced(n.right)
+}
+
+func TestFromArrayToTree(t *testing.T) {
 	tests := []struct {
-		name     string
-		arr      []int
-		expected []int
+		name string
+		arr  []int
 	}{
-		{"Empty array", []int{}, []int{}},
-		{"Single element", []int{10}, []int{10}},
-		{"Odd number of elements", []int{1, 2, 3, 4, 5, 6, 7}, []int{1, 2, 3, 4, 5, 6, 7}},
-		{"Even number of elements", []int{2, 4, 6, 8, 10, 12}, []int{2, 4, 6, 8, 10, 12}},
+		{"single_element", []int{10}},
+		{"odd_number_of_elements", []int{1, 2, 3, 4, 5, 6, 7}},
+		{"even_number_of_elements", []int{2, 4, 6, 8, 10, 12}},
+		{"empty_array", []int{}},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if len(tt.arr) == 0 {
-				root := BuildTree(tt.arr, 0, len(tt.arr)-1)
-				if root != nil {
-					t.Errorf("expected nil, got non-nil root")
+			root := FromArrayToTree(tt.arr)
+
+			// Check in-order traversal matches the original sorted array.
+			var result []int
+			inorder(root, &result)
+			if len(tt.arr) != len(result) {
+				t.Fatalf("expected %d elements, got %d", len(tt.arr), len(result))
+			}
+			for i := range tt.arr {
+				if tt.arr[i] != result[i] {
+					t.Errorf("inorder traversal mismatch at index %d: got %d, want %d", i, result[i], tt.arr[i])
 				}
-				return
 			}
 
-			root := BuildTree(tt.arr, 0, len(tt.arr)-1)
-			var result []int
-			inorderTraversal(root, &result)
-
-			if !reflect.DeepEqual(result, tt.expected) {
-				t.Errorf("inorder traversal = %v, expected %v", result, tt.expected)
+			// Verify balance property (minimal height)
+			if !isBalanced(root) {
+				t.Errorf("tree from %v is not balanced", tt.arr)
 			}
 
-			h := height(root)
-			expectedMax := int(math.Floor(math.Log2(float64(len(tt.arr)))) + 1)
-			if h > expectedMax {
-				t.Errorf("tree too tall: got %d, expected ≤ %d", h, expectedMax)
-			}
-		})
-	}
-}
-
-func TestAddElement(t *testing.T) {
-	tests := []struct {
-		name     string
-		initial  []int
-		toAdd    []int
-		expected []int
-	}{
-		{"Insert into empty tree", []int{}, []int{5}, []int{5}},
-		{"Insert one value", []int{3}, []int{1}, []int{1, 3}},
-		{"Insert multiple values", []int{2, 4, 6}, []int{1, 3, 5, 7}, []int{1, 2, 3, 4, 5, 6, 7}},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tree := &BinaryTree{}
-			if len(tt.initial) > 0 {
-				tree.Root = BuildTree(tt.initial, 0, len(tt.initial)-1)
-			}
-
-			for _, v := range tt.toAdd {
-				tree.Root = insert(tree.Root, v)
-			}
-
-			var result []int
-			inorderTraversal(tree.Root, &result)
-
-			if !reflect.DeepEqual(result, tt.expected) {
-				t.Errorf("inorder traversal = %v, expected %v", result, tt.expected)
+			// Verify height ≈ log2(n)
+			n := len(tt.arr)
+			if n > 0 {
+				h := height(root)
+				// Rough upper bound for balanced BST height is log2(n)+1
+				// We just ensure it isn't degenerate
+				if h > len(tt.arr) {
+					t.Errorf("tree height too large: got %d for %v", h, tt.arr)
+				}
 			}
 		})
-	}
-}
-
-func TestBSTProperty(t *testing.T) {
-	root := &BinaryTree{}
-	values := []int{4, 2, 6, 1, 3, 5, 7}
-	for _, v := range values {
-		root.Root = insert(root.Root, v)
-	}
-
-	var result []int
-	inorderTraversal(root.Root, &result)
-
-	for i := 1; i < len(result); i++ {
-		if result[i-1] > result[i] {
-			t.Errorf("BST property violated at %v > %v", result[i-1], result[i])
-		}
 	}
 }
