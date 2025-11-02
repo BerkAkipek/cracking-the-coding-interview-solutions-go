@@ -2,77 +2,69 @@ package checkbalanced
 
 import "testing"
 
-func TestIsBalanced(t *testing.T) {
+// helper to build simple trees easily
+func node(left, right *Node) *Node {
+	return &Node{left: left, right: right}
+}
+
+func TestBalanceDFS(t *testing.T) {
 	tests := []struct {
-		name     string
-		root     *TreeNode
-		expected bool
+		name string
+		root *Node
+		want bool
 	}{
 		{
-			name:     "Empty tree",
-			root:     nil,
-			expected: true,
+			name: "empty tree",
+			root: nil,
+			want: true, // empty is balanced
 		},
 		{
-			name:     "Single node",
-			root:     &TreeNode{},
-			expected: true,
+			name: "single node",
+			root: &Node{},
+			want: true,
 		},
 		{
-			name: "Perfectly balanced tree (3 levels)",
-			root: &TreeNode{
-				left: &TreeNode{
-					left:  &TreeNode{},
-					right: &TreeNode{},
-				},
-				right: &TreeNode{
-					left:  &TreeNode{},
-					right: &TreeNode{},
-				},
-			},
-			expected: true,
+			name: "perfectly balanced tree depth 2",
+			root: node(&Node{}, &Node{}),
+			want: true,
 		},
 		{
-			name: "Slightly unbalanced but valid",
-			root: &TreeNode{
-				left: &TreeNode{
-					left: &TreeNode{},
-				},
-				right: &TreeNode{},
-			},
-			expected: true,
+			name: "left-heavy but balanced",
+			root: node(
+				node(&Node{}, nil), // left child has one extra depth
+				&Node{},
+			),
+			want: true,
 		},
 		{
-			name: "Clearly unbalanced (left heavy)",
-			root: &TreeNode{
-				left: &TreeNode{
-					left: &TreeNode{
-						left: &TreeNode{},
-					},
-				},
-				right: &TreeNode{},
-			},
-			expected: false,
+			name: "right-heavy unbalanced",
+			root: node(
+				nil,
+				node(nil, node(nil, &Node{})), // right subtree depth = 3
+			),
+			want: false,
 		},
 		{
-			name: "Clearly unbalanced (right heavy)",
-			root: &TreeNode{
-				left: &TreeNode{},
-				right: &TreeNode{
-					right: &TreeNode{
-						right: &TreeNode{},
-					},
-				},
-			},
-			expected: false,
+			name: "deep left skewed chain",
+			root: node(
+				node(
+					node(
+						&Node{},
+						nil,
+					),
+					nil,
+				),
+				nil,
+			),
+			want: false,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := IsBalanced(tt.root)
-			if result != tt.expected {
-				t.Errorf("%s: got %v, want %v", tt.name, result, tt.expected)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := BalanceDFS(tc.root)
+			if got != tc.want {
+				t.Errorf("BalanceDFS(%v) = %v; want %v", tc.name, got, tc.want)
 			}
 		})
 	}

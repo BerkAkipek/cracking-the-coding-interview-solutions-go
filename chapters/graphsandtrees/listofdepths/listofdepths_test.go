@@ -17,13 +17,6 @@ func listToSlice(head *ListNode) []int {
 	return out
 }
 
-func printLevels(levels []*ListNode, t *testing.T) {
-	for depth, head := range levels {
-		values := listToSlice(head)
-		t.Logf("Depth %d: %v", depth, values)
-	}
-}
-
 func TestListOfDepths(t *testing.T) {
 	tests := []struct {
 		name string
