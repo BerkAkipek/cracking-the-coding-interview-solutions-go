@@ -55,7 +55,6 @@ func TestFromArrayToTree(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			root := FromArrayToTree(tt.arr)
 
-			// Check in-order traversal matches the original sorted array.
 			var result []int
 			inorder(root, &result)
 			if len(tt.arr) != len(result) {
@@ -67,17 +66,13 @@ func TestFromArrayToTree(t *testing.T) {
 				}
 			}
 
-			// Verify balance property (minimal height)
 			if !isBalanced(root) {
 				t.Errorf("tree from %v is not balanced", tt.arr)
 			}
 
-			// Verify height ≈ log2(n)
 			n := len(tt.arr)
 			if n > 0 {
 				h := height(root)
-				// Rough upper bound for balanced BST height is log2(n)+1
-				// We just ensure it isn't degenerate
 				if h > len(tt.arr) {
 					t.Errorf("tree height too large: got %d for %v", h, tt.arr)
 				}
