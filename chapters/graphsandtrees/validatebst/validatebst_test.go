@@ -2,107 +2,39 @@ package validatebst
 
 import "testing"
 
-func TestIsValid(t *testing.T) {
+func n(v int, l, r *Node) *Node {
+	return &Node{val: v, left: l, right: r}
+}
+
+func TestIsValidBST(t *testing.T) {
 	tests := []struct {
-		name     string
-		root     *Node
-		expected bool
+		name string
+		root *Node
+		want bool
 	}{
-		{
-			name:     "Empty tree",
-			root:     nil,
-			expected: true,
-		},
-		{
-			name:     "Single node",
-			root:     &Node{val: 42},
-			expected: true,
-		},
-		{
-			name: "Simple valid BST",
-			root: &Node{
-				val:   8,
-				left:  &Node{val: 4},
-				right: &Node{val: 10},
-			},
-			expected: true,
-		},
-		{
-			name: "Invalid left child greater than parent",
-			root: &Node{
-				val:   10,
-				left:  &Node{val: 12},
-				right: &Node{val: 15},
-			},
-			expected: false,
-		},
-		{
-			name: "Invalid right child smaller than parent",
-			root: &Node{
-				val:   10,
-				left:  &Node{val: 5},
-				right: &Node{val: 7},
-			},
-			expected: false,
-		},
-		{
-			name: "Deep invalid node (descendant violates range)",
-			root: &Node{
-				val: 10,
-				left: &Node{
-					val: 5,
-					right: &Node{
-						val: 11, // violates: > root but in left subtree
-					},
-				},
-				right: &Node{val: 15},
-			},
-			expected: false,
-		},
-		{
-			name: "Duplicates violate strict BST",
-			root: &Node{
-				val:   10,
-				left:  &Node{val: 10}, // duplicate
-				right: &Node{val: 12},
-			},
-			expected: false,
-		},
-		{
-			name: "Valid tree with negative numbers",
-			root: &Node{
-				val:   0,
-				left:  &Node{val: -5},
-				right: &Node{val: 5},
-			},
-			expected: true,
-		},
-		{
-			name: "Complex valid BST",
-			root: &Node{
-				val: 8,
-				left: &Node{
-					val:   4,
-					left:  &Node{val: 2},
-					right: &Node{val: 6},
-				},
-				right: &Node{
-					val:   10,
-					right: &Node{val: 20},
-				},
-			},
-			expected: true,
-		},
+		{"empty_tree", nil, true},
+		{"single_node", n(42, nil, nil), true},
+		{"perfect_valid_bst", n(8,
+			n(4, n(2, nil, nil), n(6, nil, nil)),
+			n(12, n(10, nil, nil), n(14, nil, nil))),
+			true},
+		{"deep_violation_right_subtree_smaller_than_root",
+			n(10, n(5, nil, nil), n(15, n(6, nil, nil), n(20, nil, nil))),
+			false},
+		{"local_children_ok_but_global_violation",
+			n(5, n(1, nil, nil), n(7, n(2, nil, nil), nil)),
+			false},
+		{"skewed_increasing_valid", n(1, nil, n(2, nil, n(3, nil, nil))), true},
+		{"skewed_decreasing_valid", n(3, n(2, n(1, nil, nil), nil), nil), true},
+		{"duplicates_on_left_invalid", n(5, n(5, nil, nil), nil), false},
+		{"duplicates_on_right_invalid", n(5, nil, n(5, nil, nil)), false},
 	}
 
-	const MaxInt = int(^uint(0) >> 1)
-	const MinInt = -MaxInt - 1
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := IsValid(tt.root, MinInt, MaxInt)
-			if got != tt.expected {
-				t.Errorf("%s: expected %v, got %v", tt.name, tt.expected, got)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := IsValid(tc.root)
+			if got != tc.want {
+				t.Fatalf("IsValid() = %v; want %v", got, tc.want)
 			}
 		})
 	}
